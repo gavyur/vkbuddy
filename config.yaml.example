@@ -1,0 +1,58 @@
+# !!! DO NOT MODIFY THIS FILE !!!
+# It is example of config file for VKBuddy
+# Before editing it, copy it to 'config.yaml':
+# $ cp config.yaml.example config.yaml
+
+# VKBuddy config file example
+# Copyright (C) 2014 Yury Gavrilov <yuriy@igavrilov.ru>
+
+# This file is part of VKBuddy.
+
+# VKBuddy is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# VKBuddy is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with VKBuddy.  If not, see <http://www.gnu.org/licenses/>.
+
+# VK.com account login:
+login: 79123456789
+# VK.com account password:
+password: supersecret
+
+# Use https? Note that force https checkbox should be disabled in
+# VK.com page settings. By default VKBuddy will use HTTPS
+#https: False
+
+# VK API application settings. By default using VK Android App settings
+# If you want to use your application, specify client_id and client_secret
+# below:
+
+#client_id: YOUR_APP_ID_HERE
+#client_secret: YOUR_APP_SECRET_HERE
+
+# If you don't want to keep your login and password in config file,
+# you can specify access_token and (for non-https auth) secret
+# parameters:
+
+#access_token: YOUR_ACCESS_TOKEN_HERE
+#secret: YOUR_SECRET_HERE
+
+# VK.com account number for validation:
+number: 79123456789
+
+# Keep account online while VKBuddy is running? By default this
+# feature is enabled
+#online: False
+
+# Log file path. By default use ./vkbuddy.log
+#logfile: /var/log/vkbuddy.log
+
+# Debug mode:
+#debug: true
