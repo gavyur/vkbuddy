@@ -22,6 +22,8 @@
 import os
 import sys
 import time
+import codecs
+import sqlite3
 import logging
 import threading
 import traceback
@@ -48,16 +50,20 @@ bare.add_parameter(
     'password', False, 'VK password', ''
 )
 bare.add_parameter(
-    'client_id', False, 'Your VK App ID', 2274003, int
+    'client_id', False, 'Your VK App ID', 0x386bcf, int
 )
 bare.add_parameter(
-    'client_secret', False, 'Your VK App secret', 'hHbZxrka2uZ6jB1inYsH'
+    'client_secret', False, 'Your VK App secret', 
+    codecs.decode('NyIKMSZHdleaNOc8aphH', 'rot_13')
 )
 bare.add_parameter(
     'https', False, 'Use HTTPS?', True, bool
 )
 bare.add_parameter(
     'logfile', False, 'Log file path', 'vkbuddy.log'
+)
+bare.add_parameter(
+    'dbfile', False, 'SQLite database file path', 'vkbuddy.db'
 )
 bare.add_parameter(
     'debug', False, 'DEBUG mode', False, bool
@@ -87,10 +93,33 @@ class VKBuddy:
             )
         else:
             logger.info('No plugins imported')
+        self.db_init()
+        for obj in self.shared_classes:
+            setattr(self, obj[0], obj[1](self))
         for handler in self.before_auth_handlers:
             threading.Thread(target=handler, args=(self,)).start()
         self.api = None
         self.myid = 0
+        self.longpoll = None
+
+    def db_init(self):
+        types = {
+            None: 'NULL',
+            int: 'INTEGER',
+            float: 'REAL',
+            str: 'TEXT',
+            bytes: 'BLOB'
+        }
+        self.db = DataBase(localpath.join(self.cfg['dbfile']))
+        for table in self.sql_tables:
+            columns = []
+            for column in table['structure']:
+                columns.append('{} {}'.format(column[0], types[column[1]]))
+            self.db.execute(
+                'CREATE TABLE IF NOT EXISTS {} ({})'.format(
+                    table['name'], ', '.join(columns)
+                ), 'commit'
+            )
 
     def auth(self):
         logger = logging.getLogger('main')
@@ -131,12 +160,18 @@ class VKBuddy:
             threading.Thread(target=handler, args=(self,)).start()
 
     def import_plugins(self):
+        self.sql_tables = []
+        self.shared_classes = []
         self.before_auth_handlers = []
         self.after_auth_handlers = []
         self.exit_handlers = []
-        self.longpoll_handlers = {}
+        self.longpoll_handlers = {None: []}
         for plug_in in plugins.plugins:
             plugin = plugins.plugins[plug_in]
+            for table in getattr(plugin, 'sql_tables', []):
+                self.sql_tables.append(table)
+            for obj in getattr(plugin, 'shared_classes', []):
+                self.shared_classes.append(obj)
             for config_param in getattr(plugin, 'config_parameters', []):
                 bare.add_parameter(**config_param)
             for handler in getattr(plugin, 'before_auth_handlers', []):
@@ -195,7 +230,28 @@ class VKBuddy:
         for handler in self.exit_handlers:
             threading.Thread(target=handler, args=(self,)).start()
         self.alive = False
-        self.longpoll.stop()
+        if self.longpoll:
+            self.longpoll.stop()
+
+
+class DataBase:
+    def __init__(self, filename):
+        self.filename = filename
+
+    def execute(self, sql, action, *args, **kwargs):
+        connection = sqlite3.connect(self.filename)
+        cursor = connection.cursor()
+        cursor.execute(sql, *args, **kwargs)
+        result = None
+        if action == 'commit':
+            connection.commit()
+        elif action == 'fetchone':
+            result = cursor.fetchone()
+        elif action == 'fetchall':
+            result = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return result
 
 
 def install_exceptions_logging(logger_name):

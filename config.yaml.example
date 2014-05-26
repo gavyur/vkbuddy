@@ -30,7 +30,7 @@ password: supersecret
 # VK.com page settings. By default VKBuddy will use HTTPS
 #https: False
 
-# VK API application settings. By default using VK Android App settings
+# VK API application settings. By default using VK Windows 8 App settings
 # If you want to use your application, specify client_id and client_secret
 # below:
 
@@ -46,6 +46,11 @@ password: supersecret
 
 # VK.com account number for validation:
 number: 79123456789
+
+# Admins IDs:
+#admins:
+#  - 12345678 # VK ID of first admin
+#  - 123123 # VK ID of second admin, etc
 
 # Keep account online while VKBuddy is running? By default this
 # feature is enabled

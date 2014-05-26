@@ -1,4 +1,5 @@
 *.log
 *.pyc
 *.yaml
+*.db
 __pycache__

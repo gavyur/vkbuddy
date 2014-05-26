@@ -20,7 +20,6 @@
 
 
 import random
-import logging
 import threading
 
 
@@ -57,4 +56,4 @@ config_parameters = [
      'typ': bool}
 ]
 
-__vkbuddymodule__ = True
+__vkbuddyplugin__ = True

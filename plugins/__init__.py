@@ -31,7 +31,7 @@ def __search_modules():
         if filename.endswith('.py') and not filename.startswith('__'):
             plugin_name = filename[:-3]
             plugin = importlib.import_module('.' + plugin_name, 'plugins')
-            ismodule = getattr(plugin, '__vkbuddymodule__', False)
+            ismodule = getattr(plugin, '__vkbuddyplugin__', False)
             if ismodule == True:
                 plugins[plugin_name] = plugin
 
