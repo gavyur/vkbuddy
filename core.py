@@ -23,13 +23,16 @@ import os
 import sys
 import time
 import codecs
+import random
 import sqlite3
 import logging
 import threading
 import traceback
+import urllib.parse
 import vk
 import config
 import plugins
+import locales
 import localpath
 
 
@@ -68,6 +71,9 @@ bare.add_parameter(
 bare.add_parameter(
     'debug', False, 'DEBUG mode', False, bool
 )
+bare.add_parameter(
+    'locale', False, 'Default locale', 'ru'
+)
 
 
 class ConfigFileNotFound(Exception): pass
@@ -76,6 +82,7 @@ class VKBuddyNotAuthorised(Exception): pass
 
 class VKBuddy:
     def __init__(self, cfgfile):
+        self.import_locales()
         self.import_plugins()
         cfgfile = localpath.join(cfgfile)
         if not os.path.isfile(cfgfile):
@@ -121,6 +128,12 @@ class VKBuddy:
                 ), 'commit'
             )
 
+    def send_message(self, user_id, text, attachments=[], delay=True):
+        self.api.messages.setActivity(user_id=user_id, type='typing')
+        if delay:
+            time.sleep(random.randrange(5, 10))
+        self.api.messages.send(user_id=user_id, message=text)
+
     def auth(self):
         logger = logging.getLogger('main')
         if self.cfg['access_token']:
@@ -159,6 +172,38 @@ class VKBuddy:
         for handler in self.after_auth_handlers:
             threading.Thread(target=handler, args=(self,)).start()
 
+    def get_user_info(self, user, fields=[], ncase='nom'):
+        parsed_url = urllib.parse.urlparse(user)
+        if ((parsed_url.scheme in ('http', 'https')) and
+            (parsed_url.netloc == 'vk.com')):
+            user = parsed_url.path[1:]
+        try:
+            guser = self.api.users.get(user_ids=user, fields=','.join(fields),
+                                       name_case=ncase)
+        except vk.VKAPIError:
+            return
+        else:
+            if guser:
+                return guser[0]
+
+    def locale(self, phrase, locale=None, *args, **kwargs):
+        if not locale:
+            locale = self.cfg['locale']
+        if phrase in self.locales[locale]:
+            return random.choice(
+                self.locales[locale][phrase]
+            ).format(*args, **kwargs)
+        else:
+            for nlocale in self.locales:
+                if phrase in self.locales[nlocale]:
+                    return random.choice(
+                        self.locales[nlocale][phrase]
+                    ).format(*args, **kwargs)
+        return phrase
+
+    def import_locales(self):
+        self.locales = locales.locales
+
     def import_plugins(self):
         self.sql_tables = []
         self.shared_classes = []
@@ -188,6 +233,7 @@ class VKBuddy:
                 for code in codes:
                     self.longpoll_handlers.setdefault(code, [])
                     self.longpoll_handlers[code].append(handler[1])
+
 
     def install_logger(self):
         logger = logging.getLogger('main')
@@ -232,6 +278,8 @@ class VKBuddy:
         self.alive = False
         if self.longpoll:
             self.longpoll.stop()
+
+    L = locale
 
 
 class DataBase:

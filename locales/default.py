@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Plug-ins initial module
+# Access plug-in locale
 # Copyright (C) 2014 Yury Gavrilov <yuriy@igavrilov.ru>
 
 # This file is part of VKBuddy.
@@ -18,22 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with VKBuddy.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import importlib
-import localpath
+
+locales = {
+    'ru': {
+        'WRONG_PARAMETERS': ['Ошибка в задании параметров, почитайте помощь по команде!'],
+        'WRONG_USER': ['Пользователь с ID "{uid}" не найден']
+    }
+}
 
 
-plugins = {}
-
-
-def __search_plugins():
-    for filename in os.listdir(localpath.join('plugins')):
-        if filename.endswith('.py') and not filename.startswith('__'):
-            plugin_name = filename[:-3]
-            plugin = importlib.import_module('.' + plugin_name, 'plugins')
-            isplugin = getattr(plugin, '__vkbuddyplugin__', False)
-            if isplugin == True:
-                plugins[plugin_name] = plugin
-
-
-__search_plugins()
+__vkbuddylocale__ = True

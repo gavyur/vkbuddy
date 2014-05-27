@@ -21,6 +21,7 @@
 
 import plugins
 import threading
+import shlex
 
 
 def get_plugins_commands(vkbuddy):
@@ -33,27 +34,49 @@ def get_plugins_commands(vkbuddy):
             vkbuddy.commands[command[0]][command[1]].append(command[2])
 
 
+def get_cmd_handlers(vkbuddy, command, from_id):
+    command = command.lower()
+    if command in vkbuddy.commands:
+        user_acc = vkbuddy.access.get_access(from_id)
+        accesses = list(vkbuddy.commands[command].keys())
+        accesses.sort()
+        accesses.reverse()
+        for access in accesses:
+            if user_acc >= access:
+                return vkbuddy.commands[command][access]
+    return []
+
+
+def has_command(vkbuddy, text, from_id):
+    try:
+        splitted = shlex.split(text)
+    except ValueError:
+        return False
+    else:
+        if get_cmd_handlers(vkbuddy, splitted[0], from_id):
+            return True
+        return False
+
+
 def handle_message(vkbuddy, code, msgid, flags, from_id, ts, subj, text, att):
-    if flags & 2 and flags & 4:
+    if flags & 2:
         return
-    for command in vkbuddy.commands:
-        if text.lower().startswith(command + ' ') or text.lower() == command:
-            params = text[len(command) + 1:]
-            user_acc = vkbuddy.access.get_access(from_id)
-            accesses = list(vkbuddy.commands[command].keys())
-            accesses.sort()
-            accesses.reverse()
-            for access in accesses:
-                if user_acc >= access:
-                    vkbuddy.api.messages.markAsRead(message_ids=msgid,
-                                                    user_id=from_id)
-                    for handler in vkbuddy.commands[command][access]:
-                        threading.Thread(
-                            target=handler,
-                            args=(vkbuddy, from_id, params, att,
-                                  subj, ts, msgid)
-                        ).start()
-                    break
+    try:
+        splitted = shlex.split(text)
+    except ValueError:
+        pass
+    else:
+        handlers = get_cmd_handlers(vkbuddy, splitted[0], from_id)
+        if handlers:
+            vkbuddy.api.messages.markAsRead(
+                message_ids=msgid, user_id=from_id
+            )
+            params = splitted[1:]
+            for handler in handlers:
+                threading.Thread(
+                    target=handler,
+                    args=(vkbuddy, from_id, params, att, subj, ts, msgid)
+                ).start()
 
 
 before_auth_handlers = [get_plugins_commands]

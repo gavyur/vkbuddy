@@ -20,7 +20,7 @@
 
 
 class Access:
-    default_access = 10
+    default_access = 0
     admin_access = 20
 
     def __init__(self, vkbuddy):
@@ -61,6 +61,69 @@ class Access:
             else:
                 return dbacc
 
+
+def access_command_admin(vkbuddy, from_id, params, att, subj, ts, msgid):
+    if params and params[0] in ['?', 'помощь', 'help']:
+        message = '1) {}\n2) {}'.format(vkbuddy.L('GET_ACCESS_HELP'),
+                                        vkbuddy.L('GIVE_ACCESS_HELP'))
+        vkbuddy.send_message(from_id, message)
+        return
+    if len(params) <= 1:
+        access_command(vkbuddy, from_id, params, att, subj, ts, msgid)
+    else:
+        user = params[0]
+        access = params[1]
+        found_user = vkbuddy.get_user_info(user, ncase='gen')
+        if found_user:
+            try:
+                access = int(access)
+            except ValueError:
+                vkbuddy.send_message(from_id,
+                                     vkbuddy.L('GIVE_ACCESS_WRONGACCESS'))
+            else:
+                if found_user['id'] in vkbuddy.cfg['admins']:
+                    vkbuddy.send_message(from_id, vkbuddy.L('GIVE_ACCESS_ADMIN'))
+                elif vkbuddy.access.get_access(from_id) < access:
+                    vkbuddy.send_message(from_id, vkbuddy.L('GIVE_ACCESS_LARGER'))
+                else:
+                    vkbuddy.access.set_access(found_user['id'], access)
+                    vkbuddy.send_message(
+                        from_id,
+                        vkbuddy.L('GIVE_ACCESS_SUCCESS',
+                                  uid=found_user['id'],
+                                  fname=found_user['first_name'],
+                                  lname=found_user['last_name'],
+                                  access=access)
+                    )
+        else:
+            vkbuddy.send_message(from_id, vkbuddy.L('WRONG_USER', uid=user))
+
+
+
+def access_command(vkbuddy, from_id, params, att, subj, ts, msgid):
+    if params and params[0] in ['?', 'помощь', 'help']:
+        vkbuddy.send_message(from_id, vkbuddy.L('GET_ACCESS_HELP'))
+        return
+    if not params:
+        params = [str(from_id)]
+    user = params[0]
+    found_user = vkbuddy.get_user_info(user, ncase='gen')
+    if found_user:
+        access = vkbuddy.access.get_access(found_user['id'])
+        if found_user['id'] == from_id:
+            vkbuddy.send_message(
+                from_id, vkbuddy.L('GET_SELF_ACCESS', access=access)
+            )
+        else:
+            vkbuddy.send_message(
+                from_id, vkbuddy.L('GET_USER_ACCESS', access=access,
+                                   uid=found_user['id'],
+                                   fname=found_user['first_name'],
+                                   lname=found_user['last_name'])
+            )
+    else:
+        vkbuddy.send_message(from_id, vkbuddy.L('WRONG_USER', uid=user))
+
 sql_tables = [
     {'name': 'access_main',
      'structure':(
@@ -77,6 +140,11 @@ config_parameters = [
      'description': 'VKBuddy administrators\' IDs',
      'default': [],
      'typ': list}
+]
+
+commands = [
+    ('доступ', 20, access_command_admin),
+    ('доступ', 0, access_command)
 ]
 
 __vkbuddyplugin__ = True

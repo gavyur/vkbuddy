@@ -23,17 +23,24 @@ import importlib
 import localpath
 
 
-plugins = {}
+locales = {}
 
 
-def __search_plugins():
-    for filename in os.listdir(localpath.join('plugins')):
+def __search_locales():
+    for filename in os.listdir(localpath.join('locales')):
         if filename.endswith('.py') and not filename.startswith('__'):
-            plugin_name = filename[:-3]
-            plugin = importlib.import_module('.' + plugin_name, 'plugins')
-            isplugin = getattr(plugin, '__vkbuddyplugin__', False)
-            if isplugin == True:
-                plugins[plugin_name] = plugin
+            locale_name = filename[:-3]
+            locale = importlib.import_module('.' + locale_name, 'locales')
+            islocale = getattr(locale, '__vkbuddylocale__', False)
+            if islocale == True:
+                llocales = getattr(locale, 'locales', {})
+                for llocale in llocales:
+                    locales.setdefault(llocale, {})
+                    for phrases in llocales[llocale]:
+                        locales[llocale].setdefault(phrases, [])
+                        locales[llocale][phrases].extend(
+                            llocales[llocale][phrases]
+                        )
 
 
-__search_plugins()
+__search_locales()

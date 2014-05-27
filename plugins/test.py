@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Plug-ins initial module
+# Test command plug-in
 # Copyright (C) 2014 Yury Gavrilov <yuriy@igavrilov.ru>
 
 # This file is part of VKBuddy.
@@ -18,22 +18,17 @@
 # You should have received a copy of the GNU General Public License
 # along with VKBuddy.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import importlib
-import localpath
+
+import random
 
 
-plugins = {}
+
+def handle_command(vkbuddy, from_id, params, att, subj, ts, msgid):
+    vkbuddy.send_message(from_id, vkbuddy.L('TEST_PASSED'))
 
 
-def __search_plugins():
-    for filename in os.listdir(localpath.join('plugins')):
-        if filename.endswith('.py') and not filename.startswith('__'):
-            plugin_name = filename[:-3]
-            plugin = importlib.import_module('.' + plugin_name, 'plugins')
-            isplugin = getattr(plugin, '__vkbuddyplugin__', False)
-            if isplugin == True:
-                plugins[plugin_name] = plugin
+commands = [
+    ('тест', 0, handle_command)
+]
 
-
-__search_plugins()
+__vkbuddyplugin__ = True
