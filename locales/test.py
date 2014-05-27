@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Access plug-in locale
+# Test plug-in locale
 # Copyright (C) 2014 Yury Gavrilov <yuriy@igavrilov.ru>
 
 # This file is part of VKBuddy.

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Plug-ins initial module
+#Locales initial module
 # Copyright (C) 2014 Yury Gavrilov <yuriy@igavrilov.ru>
 
 # This file is part of VKBuddy.
