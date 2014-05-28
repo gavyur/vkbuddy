@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Default locale
+# Commands locale
 # Copyright (C) 2014 Yury Gavrilov <yuriy@igavrilov.ru>
 
 # This file is part of VKBuddy.
@@ -21,10 +21,10 @@
 
 locales = {
     'ru': {
-        'WRONG_PARAMETERS': ['Ошибка в задании параметров, почитайте помощь по команде: "{command} ?"'],
-        'WRONG_USER': ['Пользователь с ID "{uid}" не найден']
+        'COMMANDS_HELP': ['Отображает список всех доступных команд\nСинтаксис: команды'],
+        'COMMANDS_NOTHING': ['Нет доступных команд'],
+        'COMMANDS_LIST': ['Список доступных команд: {commands}']
     }
 }
-
 
 __vkbuddylocale__ = True

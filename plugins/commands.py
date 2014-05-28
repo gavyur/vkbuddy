@@ -79,7 +79,31 @@ def handle_message(vkbuddy, code, msgid, flags, from_id, ts, subj, text, att):
                 ).start()
 
 
+def commands_command(vkbuddy, from_id, params, att, subj, ts, msgid):
+    if params and params[0] in ['?', 'помощь', 'help']:
+        vkbuddy.send_message(from_id, vkbuddy.L('COMMANDS_HELP'))
+        return
+    av_commands = []
+    for command in vkbuddy.commands:
+        if get_cmd_handlers(vkbuddy, command, from_id):
+            av_commands.append(command)
+    av_commands.sort()
+    if av_commands:
+        vkbuddy.send_message(
+            from_id, vkbuddy.L('COMMANDS_LIST',
+                               commands=', '.join(av_commands))
+        )
+    else:
+        vkbuddy.send_message(from_id, vkbuddy.L('COMMANDS_NOTHING'))
+
+
 before_auth_handlers = [get_plugins_commands]
 longpoll_handlers = [(4, handle_message)]
+
+
+commands = [
+    ('команды', 0, commands_command)
+]
+
 
 __vkbuddyplugin__ = True
