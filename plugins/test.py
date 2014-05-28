@@ -22,7 +22,6 @@
 import random
 
 
-
 def handle_command(vkbuddy, from_id, params, att, subj, ts, msgid):
     vkbuddy.send_message(from_id, vkbuddy.L('TEST_PASSED'))
 
