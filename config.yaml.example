@@ -60,7 +60,7 @@ number: 79123456789
 #logfile: /var/log/vkbuddy.log
 
 # SQLite3 Database file path. By default use ./vkbuddy.db
-#logfile: ./vkbuddy.db
+#dbfile: ./vkbuddy.db
 
 # Debug mode:
 #debug: true
