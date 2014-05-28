@@ -67,3 +67,6 @@ number: 79123456789
 
 # Default locale:
 #locale: ru
+
+# Typical Programmer community counter (by default disabled)
+#tproger_counter: true
