@@ -63,11 +63,6 @@ class Access:
 
 
 def access_command_admin(vkbuddy, from_id, params, att, subj, ts, msgid):
-    if params and params[0] in ['?', 'помощь', 'help']:
-        message = '1) {}\n2) {}'.format(vkbuddy.L('GET_ACCESS_HELP'),
-                                        vkbuddy.L('GIVE_ACCESS_HELP'))
-        vkbuddy.send_message(from_id, message)
-        return
     if len(params) <= 1:
         access_command(vkbuddy, from_id, params, att, subj, ts, msgid)
     else:
@@ -78,32 +73,40 @@ def access_command_admin(vkbuddy, from_id, params, att, subj, ts, msgid):
             try:
                 access = int(access)
             except ValueError:
-                vkbuddy.send_message(from_id,
-                                     vkbuddy.L('GIVE_ACCESS_WRONGACCESS'))
+                vkbuddy.send_message(
+                    from_id, 'Неправильно указан доступ'
+                )
             else:
                 if found_user['id'] in vkbuddy.cfg['admins']:
-                    vkbuddy.send_message(from_id, vkbuddy.L('GIVE_ACCESS_ADMIN'))
+                    vkbuddy.send_message(
+                        from_id, 'Невозможно изменить доступ администратора'
+                    )
                 elif vkbuddy.access.get_access(from_id) < access:
-                    vkbuddy.send_message(from_id, vkbuddy.L('GIVE_ACCESS_LARGER'))
+                    vkbuddy.send_message(
+                        from_id, 'Невозможно установить доступ выше вашего'
+                    )
                 else:
                     vkbuddy.access.set_access(found_user['id'], access)
+                    params = {
+                        'access': access,
+                        'fname': found_user['first_name'],
+                        'lname': found_user['last_name']
+                    }
                     vkbuddy.send_message(
                         from_id,
-                        vkbuddy.L('GIVE_ACCESS_SUCCESS',
-                                  uid=found_user['id'],
-                                  fname=found_user['first_name'],
-                                  lname=found_user['last_name'],
-                                  access=access)
+                        ('Для {fname} {lname} установлен доступ '
+                         '{access}'.format(**params))
                     )
         else:
-            vkbuddy.send_message(from_id, vkbuddy.L('WRONG_USER', uid=user))
+            params = {'uid': user}
+            vkbuddy.send_message(
+                from_id,
+                'Пользователь с ID "{uid}" не найден'.format(**params)
+            )
 
 
 
 def access_command(vkbuddy, from_id, params, att, subj, ts, msgid):
-    if params and params[0] in ['?', 'помощь', 'help']:
-        vkbuddy.send_message(from_id, vkbuddy.L('GET_ACCESS_HELP'))
-        return
     if not params:
         params = [str(from_id)]
     user = params[0]
@@ -111,18 +114,25 @@ def access_command(vkbuddy, from_id, params, att, subj, ts, msgid):
     if found_user:
         access = vkbuddy.access.get_access(found_user['id'])
         if found_user['id'] == from_id:
+            params = {'access': access}
             vkbuddy.send_message(
-                from_id, vkbuddy.L('GET_SELF_ACCESS', access=access)
+                from_id, 'Ваш уровень доступа: {access}'.format(**params)
             )
         else:
+            params = {
+                'access': access,
+                'fname': found_user['first_name'],
+                'lname': found_user['last_name']
+            }
             vkbuddy.send_message(
-                from_id, vkbuddy.L('GET_USER_ACCESS', access=access,
-                                   uid=found_user['id'],
-                                   fname=found_user['first_name'],
-                                   lname=found_user['last_name'])
+                from_id,
+                'Уровень доступа {fname} {lname}: {access}'.format(**params)
             )
     else:
-        vkbuddy.send_message(from_id, vkbuddy.L('WRONG_USER', uid=user))
+        params = {'uid': user}
+        vkbuddy.send_message(
+            from_id, 'Пользователь с ID "{uid}" не найден'.format(**params)
+        )
 
 sql_tables = [
     {'name': 'access_main',
@@ -143,8 +153,25 @@ config_parameters = [
 ]
 
 commands = [
-    ('доступ', 20, access_command_admin),
-    ('доступ', 0, access_command)
+    {'command': 'доступ',
+     'access': 20,
+     'handler': access_command_admin,
+     'help': ('* Устанавливает уровень доступа пользователя\n'
+              '* Отображает уровень доступа пользователя. По умолчанию - '
+              'Ваш уровень доступа'),
+     'syntax': '[пользователь [доступ]]',
+     'examples': [('', 'узнать Ваш уровень доступа'),
+                  ('1', 'узнать уровень доступа пользователя с ID 1'),
+                  ('1 10', 'установить для пользователя с ID 1 уровень '
+                           'доступа 10')]},
+    {'command': 'доступ',
+     'access': 0,
+     'handler': access_command,
+     'help': ('Отображает уровень доступа пользователя. По умолчанию - '
+              'Ваш уровень доступа'),
+     'syntax': '[пользователь]',
+     'examples': [('', 'узнать Ваш уровень доступа'),
+                  ('1', 'узнать уровень доступа пользователя с ID 1')]}
 ]
 
 __vkbuddyplugin__ = True

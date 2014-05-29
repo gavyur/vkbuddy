@@ -32,7 +32,6 @@ import urllib.parse
 import vk
 import config
 import plugins
-import locales
 import localpath
 
 
@@ -71,9 +70,6 @@ bare.add_parameter(
 bare.add_parameter(
     'debug', False, 'DEBUG mode', False, bool
 )
-bare.add_parameter(
-    'locale', False, 'Default locale', 'ru'
-)
 
 
 class ConfigFileNotFound(Exception): pass
@@ -82,7 +78,6 @@ class VKBuddyNotAuthorised(Exception): pass
 
 class VKBuddy:
     def __init__(self, cfgfile):
-        self.import_locales()
         self.import_plugins()
         cfgfile = localpath.join(cfgfile)
         if not os.path.isfile(cfgfile):
@@ -186,24 +181,6 @@ class VKBuddy:
             if guser:
                 return guser[0]
 
-    def locale(self, phrase, locale=None, *args, **kwargs):
-        if not locale:
-            locale = self.cfg['locale']
-        if phrase in self.locales[locale]:
-            return random.choice(
-                self.locales[locale][phrase]
-            ).format(*args, **kwargs)
-        else:
-            for nlocale in self.locales:
-                if phrase in self.locales[nlocale]:
-                    return random.choice(
-                        self.locales[nlocale][phrase]
-                    ).format(*args, **kwargs)
-        return phrase
-
-    def import_locales(self):
-        self.locales = locales.locales
-
     def import_plugins(self):
         self.sql_tables = []
         self.shared_classes = []
@@ -278,8 +255,6 @@ class VKBuddy:
         self.alive = False
         if self.longpoll:
             self.longpoll.stop()
-
-    L = locale
 
 
 class DataBase:

@@ -133,34 +133,30 @@ class TProgerCounter:
 
 
 def toggle_counter(vkbuddy, from_id, params, att, subj, ts, msgid):
-    if params and params[0] in ['?', 'помощь', 'help']:
-        vkbuddy.send_message(from_id, vkbuddy.L('TPCNT_TOGGLE_HELP'))
-        return
     if params:
         if params[0] in ['старт', 'включить', '+', 'вкл', 'start']:
             if counter.is_running():
-                vkbuddy.send_message(from_id,
-                                     vkbuddy.L('TPCNT_ALREADY_RUNNING'))
+                vkbuddy.send_message(from_id, 'Счетчик уже запущен')
             else:
                 counter.start_loop(vkbuddy)
-                vkbuddy.send_message(from_id, vkbuddy.L('TPCNT_TOGGLED_RUN'))
+                vkbuddy.send_message(from_id, 'Счетчик запущен')
         elif params[0] in ['стоп', 'выключить', '-', 'выкл', 'stop']:
             if counter.is_running():
                 counter.stop_loop(vkbuddy)
-                vkbuddy.send_message(from_id,
-                                     vkbuddy.L('TPCNT_TOGGLED_NOTRUN'))
+                vkbuddy.send_message(from_id, 'Счетчик остановлен')
             else:
-                vkbuddy.send_message(from_id,
-                                     vkbuddy.L('TPCNT_ALREADY_NOTRUNNING'))
+                vkbuddy.send_message(from_id, 'Счетчик уже остановлен')
         else:
             vkbuddy.send_message(
-                from_id, vkbuddy.L('WRONG_PARAMETERS', command='тпсчетчик')
+                from_id,
+                ('Ошибка в задании параметров, почитайте помощь по команде: '
+                 '"тпсчетчик ?"')
             )
     else:
         if counter.is_running():
-            vkbuddy.send_message(from_id, vkbuddy.L('TPCNT_RUNNING'))
+            vkbuddy.send_message(from_id, 'Счетчик сейчас запущен')
         else:
-            vkbuddy.send_message(from_id, vkbuddy.L('TPCNT_NOTRUNNING'))
+            vkbuddy.send_message(from_id, 'Счетчик сейчас не запущен')
 
 
 counter = TProgerCounter()
@@ -186,7 +182,15 @@ config_parameters = [
 ]
 
 commands = [
-    ('тпсчетчик', 20, toggle_counter)
+    {'command': 'тпсчетчик',
+     'access': 20,
+     'handler': toggle_counter,
+     'help': ('Включает/выключает (для текущей сессии) счетчик чисел в '
+              'сообществе Типичного Программиста'),
+     'syntax': '[старт|стоп]',
+     'examples': [('', 'узнать текущее состояние счетчика'),
+                  ('старт', 'запустить счетчик'),
+                  ('стоп', 'остановить счетчик')]}
 ]
 
 __vkbuddyplugin__ = True

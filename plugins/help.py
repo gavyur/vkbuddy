@@ -23,25 +23,44 @@ import plugins.commands
 
 
 def help_command(vkbuddy, from_id, params, att, subj, ts, msgid):
-    if params and params[0] in ['?', 'помощь', 'help']:
-        vkbuddy.send_message(from_id, vkbuddy.L('HELP_HELP'))
-        return
     if len(params) >= 1:
         handlers = plugins.commands.get_cmd_handlers(
             vkbuddy, params[0], from_id
         )
         if handlers:
-            for handler in handlers:
-                handler(vkbuddy, from_id, ['?'], att, subj, ts, msgid)
+            help = plugins.commands.generate_cmd_help(
+                vkbuddy, params[0], from_id
+            )
+            if help:
+                vkbuddy.send_message(from_id, help)
+            else:
+                params = {'command': params[0]}
+                vkbuddy.send_message(
+                    from_id,
+                    ('Помощь по команде "{command}" не '
+                     'найдена'.format(**params))
+                )
         else:
-            vkbuddy.send_message(from_id, vkbuddy.L('HELP_WRONGCOMMAND',
-                                                    command=params[0]))
+            params = {'command': params[0]}
+            vkbuddy.send_message(
+                from_id, 'Команда "{command}" не найдена'.format(**params)
+            )
     else:
-        vkbuddy.send_message(from_id, vkbuddy.L('HELP'))
+        vkbuddy.send_message(
+            from_id,
+            '''VKBuddy (C) 2014 Yury Gavrilov <yuriy@igavrilov.ru>
+Для просмотра списка команд наберите "команды"
+Для получения справки по команде наберите "<команда> ?"'''
+        )
+
 
 
 commands = [
-    ('помощь', 0, help_command)
+    {'command': 'помощь',
+     'access': 0,
+     'handler': help_command,
+     'help': 'Отображает справочное сообщение',
+     'syntax': ''}
 ]
 
 __vkbuddyplugin__ = True

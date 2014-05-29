@@ -22,12 +22,20 @@
 import random
 
 
+phrases = ['Тест пройден!', 'Я еще жив!', 'Я здесь!', 'Тест пройден успешно!',
+           'Пройден!']
+
+
 def handle_command(vkbuddy, from_id, params, att, subj, ts, msgid):
-    vkbuddy.send_message(from_id, vkbuddy.L('TEST_PASSED'))
+    vkbuddy.send_message(from_id, random.choice(phrases))
 
 
 commands = [
-    ('тест', 0, handle_command)
+    {'command': 'тест',
+     'access': 0,
+     'handler': handle_command,
+     'help': 'Проверка бота на работоспособность',
+     'syntax': ''}
 ]
 
 __vkbuddyplugin__ = True

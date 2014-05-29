@@ -28,13 +28,39 @@ def get_plugins_commands(vkbuddy):
     vkbuddy.commands = {}
     for plug_in in plugins.plugins:
         plugin = plugins.plugins[plug_in]
-        for command in getattr(plugin, 'commands', []):
-            vkbuddy.commands.setdefault(command[0], {})
-            vkbuddy.commands[command[0]].setdefault(command[1], [])
-            vkbuddy.commands[command[0]][command[1]].append(command[2])
+        for cmd in getattr(plugin, 'commands', []):
+            vkbuddy.commands.setdefault(cmd['command'], {})
+            vkbuddy.commands[cmd['command']].setdefault(cmd['access'], {})
+            vkbuddy.commands[cmd['command']][cmd['access']].setdefault(
+                'handlers', []
+            )
+            (vkbuddy.commands[cmd['command']][cmd['access']]['handlers']
+                .append(cmd['handler']))
+            ch = vkbuddy.commands[cmd['command']][cmd['access']].setdefault(
+                'help', ''
+            )
+            if not ch:
+                vkbuddy.commands[cmd['command']][cmd['access']]['help'] = (
+                    cmd.get('help', '')
+                )
+            cs = vkbuddy.commands[cmd['command']][cmd['access']].setdefault(
+                'syntax', None
+            )
+            if cs == None:
+                vkbuddy.commands[cmd['command']][cmd['access']]['syntax'] = (
+                    cmd.get('syntax', None)
+                )
+            ex = vkbuddy.commands[cmd['command']][cmd['access']].setdefault(
+                'examples', []
+            )
+            for example in cmd.get('examples', []):
+                if example in ex:
+                    continue
+                (vkbuddy.commands[cmd['command']][cmd['access']]['examples']
+                    .append(example))
 
 
-def get_cmd_handlers(vkbuddy, command, from_id):
+def get_cmd(vkbuddy, command, from_id):
     command = command.lower()
     if command in vkbuddy.commands:
         user_acc = vkbuddy.access.get_access(from_id)
@@ -44,7 +70,53 @@ def get_cmd_handlers(vkbuddy, command, from_id):
         for access in accesses:
             if user_acc >= access:
                 return vkbuddy.commands[command][access]
-    return []
+    return {}
+
+
+def get_cmd_handlers(vkbuddy, command, from_id):
+    cmd = get_cmd(vkbuddy, command, from_id)
+    if cmd:
+        return cmd['handlers']
+    else:
+        return []
+
+
+def generate_cmd_help(vkbuddy, command, from_id):
+    cmd = get_cmd(vkbuddy, command, from_id)
+    if cmd:
+        result = cmd['help']
+        if result:
+            result += '\n'
+        syntax = cmd['syntax']
+        if syntax != None:
+            result += 'Синтаксис: {} {}\n'.format(command, syntax)
+        examples = cmd['examples']
+        if len(examples) == 1:
+            example = examples[0]
+            result += 'Пример: "{}'.format(command)
+            if example[0]:
+                result += ' {}"'.format(example[0])
+            else:
+                result += '"'
+            if example[1]:
+                result += ' - {}\n'.format(example[1])
+            else:
+                result += '\n'
+        elif len(examples) > 1:
+            result += 'Примеры: \n'
+            for num, example in enumerate(examples):
+                result += '{}) "{}'.format(num + 1, command)
+                if example[0]:
+                    result += ' {}"'.format(example[0])
+                else:
+                    result += '"'
+                if example[1]:
+                    result += ' - {}\n'.format(example[1])
+                else:
+                    result += '\n'
+        return result.strip()
+    else:
+        return ''
 
 
 def has_command(vkbuddy, text, from_id):
@@ -56,6 +128,18 @@ def has_command(vkbuddy, text, from_id):
         if get_cmd_handlers(vkbuddy, splitted[0], from_id):
             return True
         return False
+
+
+def send_cmd_help(vkbuddy, user_id, command):
+    help = generate_cmd_help(vkbuddy, command, user_id)
+    if help:
+        vkbuddy.send_message(user_id, help)
+    else:
+        vkbuddy.send_message(
+            user_id,
+            ('Помощь по команде "{command}" не '
+             'найдена'.format(command=command))
+        )
 
 
 def handle_message(vkbuddy, code, msgid, flags, from_id, ts, subj, text, att):
@@ -72,6 +156,9 @@ def handle_message(vkbuddy, code, msgid, flags, from_id, ts, subj, text, att):
                 message_ids=msgid, user_id=from_id
             )
             params = splitted[1:]
+            if params and params[0] in ['?', 'помощь', 'хелп', 'help']:
+                send_cmd_help(vkbuddy, from_id, splitted[0])
+                return
             for handler in handlers:
                 threading.Thread(
                     target=handler,
@@ -80,21 +167,18 @@ def handle_message(vkbuddy, code, msgid, flags, from_id, ts, subj, text, att):
 
 
 def commands_command(vkbuddy, from_id, params, att, subj, ts, msgid):
-    if params and params[0] in ['?', 'помощь', 'help']:
-        vkbuddy.send_message(from_id, vkbuddy.L('COMMANDS_HELP'))
-        return
     av_commands = []
     for command in vkbuddy.commands:
         if get_cmd_handlers(vkbuddy, command, from_id):
             av_commands.append(command)
     av_commands.sort()
     if av_commands:
+        params = {'commands': ', '.join(av_commands)}
         vkbuddy.send_message(
-            from_id, vkbuddy.L('COMMANDS_LIST',
-                               commands=', '.join(av_commands))
+            from_id, 'Список доступных команд: {commands}'.format(**params)
         )
     else:
-        vkbuddy.send_message(from_id, vkbuddy.L('COMMANDS_NOTHING'))
+        vkbuddy.send_message(from_id, 'Нет доступных команд')
 
 
 before_auth_handlers = [get_plugins_commands]
@@ -102,7 +186,11 @@ longpoll_handlers = [(4, handle_message)]
 
 
 commands = [
-    ('команды', 0, commands_command)
+    {'command': 'команды',
+     'access': 0,
+     'handler': commands_command,
+     'help': 'Отображает список всех доступных команд',
+     'syntax': ''}
 ]
 
 
